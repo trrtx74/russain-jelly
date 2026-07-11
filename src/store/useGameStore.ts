@@ -7,6 +7,7 @@ import {
   simulateDraw,
 } from '../utils/gameRules';
 import type { Player } from '../utils/gameRules';
+import { logGameResult } from '../services/gameLog';
 
 interface Stats {
   totalGames: number;
@@ -58,6 +59,36 @@ interface GameStore {
   quitGame: () => void;
   drawJellies: (count: number) => void;
   surrender: () => void;
+}
+
+// 종료된 게임의 최종 상태 스냅샷으로 Supabase 저장용 기록을 만들어 전송합니다.
+// (fire-and-forget: 실패해도 게임 흐름에 영향 없음)
+function sendGameRecord(
+  state: GameStore,
+  winner: Player | 'DRAW',
+  endReason: 'FINISHED' | 'SURRENDER'
+) {
+  const startItem = state.history.find((h) => h.type === 'START');
+  const turns = state.history.filter((h) => h.type === 'DRAW').length;
+
+  void logGameResult({
+    mode: state.mode,
+    cpu_difficulty: state.mode === 'VS_CPU' ? state.cpuDifficulty : null,
+    engine_version: state.mode === 'VS_CPU' ? state.vsCpuStats.engineVersion : null,
+    winner,
+    end_reason: endReason,
+    starting_player: (startItem?.player as Player) ?? 'PLAYER_1',
+    score_p1: state.scores.PLAYER_1,
+    score_p2: state.scores.PLAYER_2,
+    jellies_p1: state.playerJellies.PLAYER_1,
+    jellies_p2: state.playerJellies.PLAYER_2,
+    bullets_p1: state.playerBullets.PLAYER_1,
+    bullets_p2: state.playerBullets.PLAYER_2,
+    bullets_total: state.playerBullets.PLAYER_1 + state.playerBullets.PLAYER_2,
+    turns,
+    language: state.language,
+    history: state.history,
+  });
 }
 
 export const useGameStore = create<GameStore>()(
@@ -272,6 +303,8 @@ export const useGameStore = create<GameStore>()(
               history: newHistory,
             };
           });
+
+          sendGameRecord(get(), winner as Player | 'DRAW', 'FINISHED');
         } else {
           // Switch Turn
           const nextTurn = currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
@@ -324,6 +357,8 @@ export const useGameStore = create<GameStore>()(
             history: [...state.history, newHistoryItem]
           };
         });
+
+        sendGameRecord(get(), winner, 'SURRENDER');
       },
     }),
     {
