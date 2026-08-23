@@ -9,6 +9,8 @@ import {
 import type { Player } from '../utils/gameRules';
 import { logGameResult } from '../services/gameLog';
 
+const engineVersion = '1.0.1';
+
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export const DIFFS: Difficulty[] = ['easy', 'medium', 'hard'];
 export const DIFF_LABELS: Record<Difficulty, { ko: string; en: string }> = {
@@ -126,7 +128,7 @@ export const useGameStore = create<GameStore>()(
         easy: { totalGames: 0, wins: 0, draws: 0 },
         medium: { totalGames: 0, wins: 0, draws: 0 },
         hard: { totalGames: 0, wins: 0, draws: 0 },
-        engineVersion: '1.0.0',
+        engineVersion: engineVersion,
       },
       twoPlayerStats: { totalGames: 0, wins: 0, draws: 0 },
       language: 'ko',
@@ -147,7 +149,7 @@ export const useGameStore = create<GameStore>()(
               easy: { totalGames: 0, wins: 0, draws: 0 },
               medium: { totalGames: 0, wins: 0, draws: 0 },
               hard: { totalGames: 0, wins: 0, draws: 0 },
-              engineVersion: '1.0.0',
+              engineVersion: engineVersion,
             },
             twoPlayerStats: { totalGames: 0, wins: 0, draws: 0 },
           };
