@@ -33,7 +33,7 @@ const ModalContainer = styled.div`
   padding: 10px;
   max-width: 800px;
   width: 90%;
-  max-height: 90%;
+  max-height: 95%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 
   @media (max-width: 768px) {
@@ -71,10 +71,6 @@ const Content = styled.div`
     display: flex;
     align-items: center;
   }
-
-  a.en {
-    font-style: italic;
-  }
 `;
 
 const WS = styled.div`
@@ -83,6 +79,29 @@ const WS = styled.div`
 
 const WSWide = styled.div`
   width: 46px;
+`;
+
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.colors.primary};
+  margin: 22px 0 14px;
+`;
+
+const Recommend = styled.p`
+  font-size: 0.88rem;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-align: center;
+
+  /* pre-styled for the link that wraps the game's name */
+  a {
+    color: #2563EB;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 `;
 
 const CloseButton = styled.button`
@@ -153,6 +172,11 @@ export const HelpModal = ({ isOpen, onClose, language }: HelpModalProps) => {
                 <li>마지막 남은 총알 젤리가 뽑히면 즉시 게임이 종료됩니다.</li>
                 <li>게임 종료 시점에 점수가 더 높은 사람이 승리합니다.</li>
               </ul>
+
+              <Divider />
+              <Recommend>
+                러시안 젤리를 재미있게 플레이하셨다면 <a href="https://trrtx74.github.io/cellmoku/" target="_blank">개척 오목</a>도 플레이해 보세요!
+              </Recommend>
             </>
           ) : (
             <>
@@ -191,6 +215,11 @@ export const HelpModal = ({ isOpen, onClose, language }: HelpModalProps) => {
                 <li>When the last remaining bullet is drawn, the game ends immediately.</li>
                 <li>The player with the higher score at the end of the game wins.</li>
               </ul>
+
+              <Divider />
+              <Recommend>
+                If you enjoyed Russian Jelly, give <a href="https://trrtx74.github.io/cellmoku/" target="_blank">Cellmoku</a> a try too!
+              </Recommend>
             </>
           )}
         </Content>
