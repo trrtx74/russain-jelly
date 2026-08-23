@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useGameStore } from '../store/useGameStore';
+import { useGameStore, DIFFS, DIFF_LABELS, type Difficulty } from '../store/useGameStore';
 import { FaHome, FaGlobe, FaQuestion, FaTrophy } from "react-icons/fa";
 import { useState } from 'react';
 
@@ -110,8 +110,32 @@ const StatsContainer = styled.div`
   }
 `
 
+const StatsTable = styled.table`
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  margin-bottom: 5px;
+
+  th, td {
+    padding: 4px 10px;
+    text-align: center;
+  }
+  th {
+    color: ${({ theme }) => theme.colors.textSecondary};
+    font-weight: 600;
+    font-size: 0.72rem;
+  }
+  td:first-child, th:first-child {
+    text-align: left;
+    font-weight: 600;
+  }
+  tbody tr:not(:last-child) td {
+    border-bottom: 1px solid #D1C8A3;
+  }
+`
+
 export const Navbar = ({ onOpenHelp }: NavbarProps) => {
-  const { language, setLanguage, status, quitGame, vsCpuStats, twoPlayerStats, resetHistory, mode } = useGameStore();
+  const { language, setLanguage, status, quitGame, vsCpuStats, twoPlayerStats, resetHistory, mode, cpuDifficulty } = useGameStore();
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const toggleLanguage = () => {
@@ -137,9 +161,15 @@ export const Navbar = ({ onOpenHelp }: NavbarProps) => {
     }
   }
 
-  const cpuTotal = vsCpuStats.hard.totalGames - (mode === 'VS_CPU' && status === 'PLAYING' ? 1 : 0);
-  const cpuLoss = cpuTotal - vsCpuStats.hard.wins - vsCpuStats.hard.draws;
-  const cpuStats = `${vsCpuStats.hard.wins} / ${cpuLoss} / ${vsCpuStats.hard.draws} (${(vsCpuStats.hard.wins / cpuTotal * 100 || 0).toFixed(1)}%)`;
+  // totalGames is incremented at kick-off, so discount the game still in progress
+  const cpuWLD = (d: Difficulty) => {
+    const s = vsCpuStats[d];
+    const inProgress = status === 'PLAYING' && mode === 'VS_CPU' && cpuDifficulty === d;
+    const played = s.totalGames - (inProgress ? 1 : 0);
+    const loss = Math.max(0, played - s.wins - s.draws);
+    const rate = played > 0 ? (s.wins / played) * 100 : 0;
+    return { w: s.wins, l: loss, d: s.draws, played, rate };
+  };
 
   const humanStats = `${twoPlayerStats.wins} / ${twoPlayerStats.totalGames - twoPlayerStats.wins - twoPlayerStats.draws} / ${twoPlayerStats.draws} (${(twoPlayerStats.wins / twoPlayerStats.totalGames * 100 || 0).toFixed(1)}%)`;
 
@@ -162,7 +192,27 @@ export const Navbar = ({ onOpenHelp }: NavbarProps) => {
         {isStatsOpen && (
           <StatsContainer onMouseDown={(e) => e.preventDefault()}>
             <h4>VS CPU</h4>
-            <p>{cpuStats}</p>
+            <StatsTable>
+              <thead>
+                <tr>
+                  <th />
+                  <th>{language === 'ko' ? '승/패/무' : 'W/L/D'}</th>
+                  <th>{language === 'ko' ? '승률' : 'Win%'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DIFFS.map((d) => {
+                  const s = cpuWLD(d);
+                  return (
+                    <tr key={d}>
+                      <td>{DIFF_LABELS[d][language]}</td>
+                      <td>{`${s.w}/${s.l}/${s.d}`}</td>
+                      <td>{s.played > 0 ? `${s.rate.toFixed(0)}%` : '-'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </StatsTable>
             <h4>1P VS 2P</h4>
             <p>{humanStats}</p>
             <p style={{ fontStyle: 'italic', fontSize: '0.8rem' }}>{language === 'ko' ? '(승/패/무)' : '(Win/Lose/Draw)'}</p>

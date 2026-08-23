@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { useGameStore } from '../store/useGameStore';
+import { useGameStore, DIFF_TEMPERATURE } from '../store/useGameStore';
 import { ControlPanel } from './ControlPanel';
 import { LogPanel } from './LogPanel';
 import { useAgent } from '../services/useAgent';
@@ -84,6 +84,7 @@ const GameBoard = () => {
     startGame,
     winner,
     mode,
+    cpuDifficulty,
   } = useGameStore();
   const agent = useAgent();
 
@@ -91,14 +92,18 @@ const GameBoard = () => {
     if (status === 'PLAYING' && currentTurn === 'PLAYER_2' && mode === 'VS_CPU') {
       // CPU Turn
       const scoreDiff = scores.PLAYER_2 - scores.PLAYER_1;
-      const action = agent.getAction(jelliesRemaining, scoreDiff, isBulletRevealed, bulletsRemaining).bestK;
+      // difficulty = how much randomness the agent tolerates in its pick
+      const temperature = DIFF_TEMPERATURE[cpuDifficulty];
+      const action = agent.getAction(
+        jelliesRemaining, scoreDiff, isBulletRevealed, bulletsRemaining, temperature,
+      ).bestK;
       const timer = setTimeout(() => {
         drawJellies(action);
       }, action > 9 ? 2000 : action > 4 ? 1500 : 1000); // emulate think time
 
       return () => clearTimeout(timer);
     }
-  }, [status, currentTurn, jelliesRemaining, bulletsRemaining, drawJellies]);
+  }, [status, currentTurn, jelliesRemaining, bulletsRemaining, drawJellies, cpuDifficulty]);
 
   if (status === 'IDLE') {
     return null; // App handles StartScreen now
@@ -156,7 +161,7 @@ const GameBoard = () => {
             ? (winner === 'DRAW' ? '무승부' : `${winner === 'PLAYER_1' ? P1Str : P2Str} 승리!`)
             : (winner === 'DRAW' ? 'DRAW' : `${winner === 'PLAYER_1' ? P1Str : P2Str} WINS!`)}
           </h1>
-          <ResultButton onClick={() => startGame(mode)}>
+          <ResultButton onClick={() => startGame(mode, mode === 'VS_CPU' ? cpuDifficulty : undefined)}>
             {language === 'ko' ? '새 게임' : 'New Game'}
           </ResultButton>
         </ResultContainer>

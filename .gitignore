@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 PROJECT.md
+
+# dev-only strategy simulations
+sim/

@@ -6,6 +6,7 @@ import { theme } from './styles/theme';
 import GameBoard from './components/GameBoard';
 import { Navbar } from './components/Navbar';
 import { StartScreen } from './components/StartScreen';
+import { DifficultySelect } from './components/DifficultySelect';
 import { HelpModal } from './components/HelpModal';
 import { useGameStore } from './store/useGameStore';
 
@@ -39,7 +40,13 @@ function App() {
       <Container>
         <Navbar onOpenHelp={() => setIsHelpOpen(true)} />
         <ContentsWrapper>
-          {status === 'IDLE' ? <StartScreen /> : <GameBoard />}
+          {status === 'IDLE' ? (
+            <StartScreen />
+          ) : status === 'DIFFICULTY_SELECT' ? (
+            <DifficultySelect />
+          ) : (
+            <GameBoard />
+          )}
         </ContentsWrapper>
         <HelpModal
           isOpen={isHelpOpen}

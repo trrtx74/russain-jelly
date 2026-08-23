@@ -9,6 +9,31 @@ import {
 import type { Player } from '../utils/gameRules';
 import { logGameResult } from '../services/gameLog';
 
+export type Difficulty = 'easy' | 'medium' | 'hard';
+export const DIFFS: Difficulty[] = ['easy', 'medium', 'hard'];
+export const DIFF_LABELS: Record<Difficulty, { ko: string; en: string }> = {
+  easy: { ko: '입문자', en: 'Easy' },
+  medium: { ko: '숙련자', en: 'Medium' },
+  hard: { ko: '전문가', en: 'Hard' },
+};
+
+// Softmax temperature applied when the agent picks its draw. 0 = always the
+// best-valued action; higher = more willing to take a worse one.
+//
+// Calibrated in sim/ (dev-only). The agent breaks even with an always-draw-1
+// opponent at t ≈ 0.161, and is weaker than it above that, so the whole usable
+// range is 0–0.16. `easy` sits just under the break-even point; `medium` was
+// then picked by playing the tiers against each other, which separates them far
+// better than a fixed baseline does (that measure saturates near full strength).
+//   medium vs easy 55.3%  |  medium vs hard 44.8%   — evenly spaced
+export const DIFF_TEMPERATURE: Record<Difficulty, number> = {
+  easy: 0.13,
+  medium: 0.06,
+  hard: 0.0,
+};
+
+export type Status = 'IDLE' | 'DIFFICULTY_SELECT' | 'PLAYING' | 'ENDED';
+
 interface Stats {
   totalGames: number;
   wins: number;
@@ -41,7 +66,7 @@ interface GameStore {
   resetHistory: () => void;
 
   // Current Game State
-  status: 'IDLE' | 'PLAYING' | 'ENDED';
+  status: Status;
   jelliesRemaining: number;
   bulletsRemaining: number;
   isBulletRevealed: boolean;
@@ -51,11 +76,13 @@ interface GameStore {
   playerBullets: Record<Player, number>;
   winner: Player | 'DRAW' | null;
   mode: 'VS_CPU' | 'VS_HUMAN';
-  cpuDifficulty: 'easy' | 'medium' | 'hard';
+  cpuDifficulty: Difficulty;
   history: HistoryItem[];
 
   // Actions
-  startGame: (mode: 'VS_CPU' | 'VS_HUMAN', difficulty?: 'easy' | 'medium' | 'hard') => void;
+  // VS_CPU without a difficulty opens the picker; with one it starts the game.
+  startGame: (mode: 'VS_CPU' | 'VS_HUMAN', difficulty?: Difficulty) => void;
+  chooseDifficulty: (d: Difficulty) => void;
   quitGame: () => void;
   drawJellies: (count: number) => void;
   surrender: () => void;
@@ -140,17 +167,22 @@ export const useGameStore = create<GameStore>()(
       cpuDifficulty: 'hard',
       history: [],
 
-      startGame: (mode, difficulty = 'hard') => {
+      startGame: (mode, difficulty) => {
+        if (mode === 'VS_CPU' && difficulty === undefined) {
+          set({ mode, status: 'DIFFICULTY_SELECT' });
+          return;
+        }
+        const chosen: Difficulty = difficulty ?? 'hard';
         const bullets = generateBullets();
 
         set((state) => {
           const startingPlayer = mode === 'VS_CPU'
-            ? state.vsCpuStats[difficulty].totalGames % 2 === 0 ? 'PLAYER_1' : 'PLAYER_2'
+            ? state.vsCpuStats[chosen].totalGames % 2 === 0 ? 'PLAYER_1' : 'PLAYER_2'
             : state.twoPlayerStats.totalGames % 2 === 0 ? 'PLAYER_1' : 'PLAYER_2';
 
           const newCpuStats = { ...state.vsCpuStats };
           if (mode === 'VS_CPU') {
-            newCpuStats[difficulty].totalGames += 1;
+            newCpuStats[chosen].totalGames += 1;
           }
 
           return {
@@ -164,7 +196,7 @@ export const useGameStore = create<GameStore>()(
             playerBullets: { PLAYER_1: 0, PLAYER_2: 0 },
             winner: null,
             mode: mode,
-            cpuDifficulty: difficulty,
+            cpuDifficulty: chosen,
             vsCpuStats: newCpuStats,
             history: [{
               id: 0,
@@ -178,6 +210,8 @@ export const useGameStore = create<GameStore>()(
           };
         });
       },
+
+      chooseDifficulty: (d) => get().startGame('VS_CPU', d),
 
       quitGame: () => {
         set({ status: 'IDLE' });
