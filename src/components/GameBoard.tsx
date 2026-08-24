@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { useGameStore, DIFF_TEMPERATURE } from '../store/useGameStore';
+import { useGameStore, DIFF_TEMPERATURE, DIFF_LABELS } from '../store/useGameStore';
 import { ControlPanel } from './ControlPanel';
 import { LogPanel } from './LogPanel';
 import { useAgent } from '../services/useAgent';
@@ -15,7 +15,7 @@ const BoardContainer = styled.div`
   width: min(600px, 100vw);
   height: 100%;
   padding: 20px;
-  gap: 20px;
+  /* gap: 20px; */
   position: relative;
 `;
 
@@ -24,6 +24,7 @@ const PlayerSectionContainer = styled.div`
   flex-direction: row;
   width: 100%;
   gap: 10px;
+  margin-bottom: 20px;
 `;
 
 // const PlayerSection = styled.div<{ $isCurrentTurn: boolean }>`
@@ -50,6 +51,7 @@ const CounterContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  margin-bottom: 20px;
 `;
 
 const ResultContainer = styled.div`
@@ -57,6 +59,7 @@ const ResultContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin-bottom: 20px;
 `;
 
 const ResultButton = styled.button`
@@ -67,6 +70,13 @@ const ResultButton = styled.button`
   color: white;
   border-radius: 12px;
   border: none;
+`;
+
+const ModeText = styled.div`
+  width: 100%;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-align: start;
 `;
 
 const GameBoard = () => {
@@ -111,6 +121,9 @@ const GameBoard = () => {
 
   const P1Str = 'PLAYER 1';
   const P2Str = mode === 'VS_CPU' ? 'CPU' : 'PLAYER 2';
+  const modeText = mode === 'VS_CPU'
+    ? DIFF_LABELS[cpuDifficulty][language] + ' CPU'
+    : (language === 'ko' ? '2인 플레이' : '2 Player Mode');
 
   return (
     <BoardContainer>
@@ -166,6 +179,8 @@ const GameBoard = () => {
           </ResultButton>
         </ResultContainer>
       )}
+      
+      <ModeText>{modeText}</ModeText>
       <LogPanel />
     </BoardContainer>
   );

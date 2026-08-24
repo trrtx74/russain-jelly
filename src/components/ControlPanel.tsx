@@ -19,6 +19,7 @@ const PanelContainer = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  margin-bottom: 20px;
 `;
 
 const ButtonGrid = styled.div`
@@ -30,7 +31,8 @@ const ButtonGrid = styled.div`
   
   @media (max-width: 768px) {
     width: min(100%, 536px);
-    height: 150px;
+    /* height: 150px; */
+    height: min(18vh, 150px);
     align-content: flex-start;
     overflow-y: auto;
   }

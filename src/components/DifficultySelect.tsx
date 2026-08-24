@@ -27,19 +27,20 @@ const ButtonGroup = styled.div`
 
 // Matches StartScreen's MenuButton so the two menus feel like one flow.
 const DiffButton = styled.button`
-  padding: 20px;
-  font-size: 1.5rem;
+  padding: 18px;
+  font-size: 1.4rem;
   background: rgba(255, 255, 255, 0.05);
+  background: #fffefc;
   border: 1px solid ${({ theme }) => theme.colors.primary};
   color: ${({ theme }) => theme.colors.text};
   border-radius: 16px;
   backdrop-filter: blur(5px);
   font-weight: bold;
   transition: ${({ theme }) => theme.transitions.fast};
+  box-shadow: 0 4px 14px rgba(219, 37, 235, 0.12);
 
   &:hover {
     background: ${({ theme }) => theme.colors.primary};
-    transform: scale(1.05);
   }
 `;
 
